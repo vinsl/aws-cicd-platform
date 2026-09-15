@@ -1,21 +1,32 @@
 variable "aws_region" {
-  description = "AWS region for all resources"
+  description = "AWS region used by the platform"
   type        = string
   default     = "eu-west-3"
 }
 
+variable "project_name" {
+  description = "Project name used in AWS resource names"
+  type        = string
+  default     = "aws-cicd-platform"
+}
+
 variable "environment" {
-  description = "Environment name (used for naming resources)"
+  description = "Deployment environment"
   type        = string
   default     = "dev"
 }
 
+variable "state_bucket_name" {
+  description = "Globally unique S3 bucket name for Terraform state"
+  type        = string
+}
+
 variable "github_owner" {
-  description = "GitHub owner (user or org), e.g. 'vincent-lucas'"
+  description = "GitHub user or organisation owning the repository"
   type        = string
 }
 
 variable "github_repo" {
-  description = "GitHub repository name, e.g. 'aws-cicd-platform'"
+  description = "GitHub repository name"
   type        = string
 }
