@@ -8,9 +8,4 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 
-echo "=== Checking tools ==="
-terraform version
-aws --version
-docker --version
-
 echo "=== Devcontainer ready ==="
