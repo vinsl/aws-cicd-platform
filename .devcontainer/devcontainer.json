@@ -1,0 +1,28 @@
+{
+  "name": "aws-cicd-platform",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".devcontainer"
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "hashicorp.terraform",
+        "ms-python.python",
+        "ms-azuretools.vscode-azureterraform",
+        "amazonwebservices.aws-toolkit-vscode"
+      ],
+      "settings": {
+        "terraform.languageServer.enable": true,
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
+}
