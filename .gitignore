@@ -228,3 +228,5 @@ terraform.tfvars
 *.tfvars
 !*.tfvars.example
 .terraform.lock.hcl
+
+pyvenv.cfg
