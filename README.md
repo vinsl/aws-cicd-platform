@@ -6,3 +6,5 @@ Demonstration of a secure CI/CD pipeline from GitHub to AWS ECS Fargate:
 - Terraform remote state and modular infrastructure
 - Dockerised Flask app with `/health` endpoint deployed to ECS Fargate
 - Integrated security tools (gitleaks, Trivy, tfsec/Checkov)
+
+test
