@@ -31,6 +31,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+            aws-region: eu-west-3
+
       - name: Verify AWS identity
         run: |
           aws sts get-caller-identity
@@ -47,12 +53,6 @@ jobs:
         run: |
           echo "Role ARN length: ${#AWS_ROLE_ARN_VALUE}"
           echo "Role ARN suffix: ${AWS_ROLE_ARN_VALUE##*/}"
-
-      - name: Configure AWS credentials with OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-            role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-            aws-region: eu-west-3
 
       - name: Authenticate Docker to ECR
         id: ecr-login
