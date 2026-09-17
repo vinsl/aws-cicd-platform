@@ -257,6 +257,17 @@ resource "aws_iam_role_policy" "github_actions_deployment" {
         Resource = "*"
       },
       {
+        Sid    = "EcsTaskDefinitionDeployment"
+        Effect = "Allow"
+
+        Action = [
+          "ecs:DescribeTaskDefinition",
+          "ecs:RegisterTaskDefinition"
+        ]
+
+        Resource = "*"
+      },
+      {
         Sid    = "EcrPushImage"
         Effect = "Allow"
 
@@ -277,7 +288,6 @@ resource "aws_iam_role_policy" "github_actions_deployment" {
         Action = [
           "ecs:DescribeClusters",
           "ecs:DescribeServices",
-          "ecs:DescribeTaskDefinition",
           "ecs:DescribeTasks",
           "ecs:ListTasks",
           "ecs:UpdateService"
