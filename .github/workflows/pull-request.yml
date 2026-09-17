@@ -95,10 +95,10 @@ jobs:
         with:
           directory: terraform
           framework: terraform
+          config_file: .checkov.yaml
           soft_fail: false
           compact: true
           quiet: true
-          skip_check: CKV_TF_1,CKV_TF_2
 
   secrets-scan:
     name: Scan repository for secrets
