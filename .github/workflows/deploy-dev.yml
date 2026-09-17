@@ -31,12 +31,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Display OIDC repository context
-        run: |
-            echo "repository=${GITHUB_REPOSITORY}"
-            echo "repository_owner_id=${GITHUB_REPOSITORY_OWNER_ID}"
-            echo "repository_id=${GITHUB_REPOSITORY_ID}"
-
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
