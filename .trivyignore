@@ -1,0 +1,22 @@
+# The ALB is intentionally internet-facing because the GitHub-hosted
+# runner performs the post-deployment /health smoke test.
+# The ALB forwards traffic only to the ECS service security group.
+AWS-0053
+#The development environment intentionally uses HTTP because it is a
+#low-cost, temporary portfolio environment without a registered domain.
+#Production would terminate TLS at the ALB with an ACM certificate and
+#redirect HTTP traffic to HTTPS.
+AWS-0054
+#The ECS task requires outbound access for image startup and external
+#dependencies. The environment is temporary and should be destroyed after tests.
+AWS-0104
+AWS-0124
+# S3 server access logging is intentionally disabled for the low-cost
+# portfolio environment. The state bucket is encrypted, versioned and
+# blocked from public access. Production would centralize S3 access logs
+# or use CloudTrail data events.
+AWS-0089
+# VPC Flow Logs are intentionally disabled in this low-cost development
+# environment. Production would enable Flow Logs to CloudWatch Logs or S3
+# with retention and cost controls.
+AWS-0178
