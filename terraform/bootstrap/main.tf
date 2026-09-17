@@ -165,6 +165,7 @@ resource "aws_kms_alias" "ecr" {
 resource "aws_ecr_repository" "app" {
   name                 = "${var.project_name}-app"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -200,24 +201,30 @@ resource "aws_iam_role" "github_actions" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
         Sid    = "GitHubActionsMainBranch"
         Effect = "Allow"
+
         Principal = {
           Federated = aws_iam_openid_connect_provider.github.arn
         }
+
         Action = "sts:AssumeRoleWithWebIdentity"
+
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
+
+          StringLike = {
             "token.actions.githubusercontent.com:sub" = "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/main"
           }
         }
       }
     ]
   })
-
   tags = {
     Name        = "${var.project_name}-github-actions"
     Environment = var.environment
@@ -225,24 +232,28 @@ resource "aws_iam_role" "github_actions" {
   }
 }
 
-resource "aws_iam_role_policy" "github_actions_ecr" {
-  name = "${var.project_name}-github-actions-ecr-${var.environment}"
+resource "aws_iam_role_policy" "github_actions_deployment" {
+  name = "${var.project_name}-github-actions-deployment-${var.environment}"
   role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
         Sid    = "EcrLogin"
         Effect = "Allow"
+
         Action = [
           "ecr:GetAuthorizationToken"
         ]
+
         Resource = "*"
       },
       {
-        Sid    = "EcrPushPull"
+        Sid    = "EcrPushImage"
         Effect = "Allow"
+
         Action = [
           "ecr:BatchCheckLayerAvailability",
           "ecr:CompleteLayerUpload",
@@ -250,7 +261,36 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
           "ecr:PutImage",
           "ecr:UploadLayerPart"
         ]
+
         Resource = aws_ecr_repository.app.arn
+      },
+      {
+        Sid    = "EcsDeployment"
+        Effect = "Allow"
+
+        Action = [
+          "ecs:DescribeClusters",
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
+          "ecs:DescribeTasks",
+          "ecs:ListTasks",
+          "ecs:RegisterTaskDefinition",
+          "ecs:UpdateService"
+        ]
+
+        Resource = "*"
+      },
+      {
+        Sid    = "LoadBalancerReadOnly"
+        Effect = "Allow"
+
+        Action = [
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeTargetHealth"
+        ]
+
+        Resource = "*"
       }
     ]
   })
