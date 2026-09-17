@@ -84,7 +84,7 @@ jobs:
           compact: true
           quiet: true
   
-        - name: Run Trivy IaC scan
+      - name: Run Trivy IaC scan
         uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: config
