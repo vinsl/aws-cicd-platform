@@ -274,8 +274,20 @@ resource "aws_iam_role_policy" "github_actions_deployment" {
           "ecs:DescribeTaskDefinition",
           "ecs:DescribeTasks",
           "ecs:ListTasks",
-          "ecs:RegisterTaskDefinition",
           "ecs:UpdateService"
+        ]
+
+        Resource = [
+          "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${var.project_name}-${var.environment}-task:*",
+          "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:service/${var.project_name}-${var.environment}-cluster/${var.project_name}-${var.environment}-service"
+        ]
+      },
+      {
+        Sid    = "EcsRegisterTaskDefinition"
+        Effect = "Allow"
+
+        Action = [
+          "ecs:RegisterTaskDefinition"
         ]
 
         Resource = "*"

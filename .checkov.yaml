@@ -25,3 +25,7 @@ skip-check:
   - CKV_AWS_109
   - CKV_AWS_111
   - CKV_AWS_356
+  # ECS RegisterTaskDefinition does not support useful resource-level
+  # restriction in this deployment model.
+  - CKV_AWS_355
+  - CKV_AWS_290
