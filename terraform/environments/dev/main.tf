@@ -82,7 +82,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
   availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = merge(local.common_tags, {
     Name = "${local.name}-public-${count.index + 1}"
@@ -124,10 +124,10 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
-    description = "Allow outbound traffic"
-    protocol    = "-1"
+    description = "Allow the load balancer to forward traffic to ECS tasks"
     from_port   = 0
     to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -150,10 +150,10 @@ resource "aws_security_group" "ecs" {
   }
 
   egress {
-    description = "Allow outbound traffic"
-    protocol    = "-1"
-    from_port   = 0
-    to_port     = 0
+    description = "HTTPS outbound traffic"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -192,6 +192,7 @@ resource "aws_lb" "app" {
   security_groups            = [aws_security_group.alb.id]
   subnets                    = aws_subnet.public[*].id
   enable_deletion_protection = false
+  drop_invalid_header_fields = true
 
   tags = merge(local.common_tags, {
     Name = "${local.name}-alb"
