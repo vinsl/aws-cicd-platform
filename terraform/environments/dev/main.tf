@@ -124,6 +124,7 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
+    description = "Allow the load balancer to forward traffic to ECS tasks"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
