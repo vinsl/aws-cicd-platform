@@ -31,6 +31,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify AWS identity
+        run: |
+          aws sts get-caller-identity
+          aws configure list
+          aws ecs describe-task-definition \
+            --task-definition "aws-cicd-platform-dev-task" \
+            --region "${AWS_REGION}" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text
+
+      - name: Check configured role
+        env:
+          AWS_ROLE_ARN_VALUE: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          echo "Role ARN length: ${#AWS_ROLE_ARN_VALUE}"
+          echo "Role ARN suffix: ${AWS_ROLE_ARN_VALUE##*/}"
+
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
