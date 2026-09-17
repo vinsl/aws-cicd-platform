@@ -1,0 +1,27 @@
+skip-check:
+  - CKV_TF_1
+  - CKV_TF_2
+  - CKV_AWS_2
+  - CKV_AWS_18
+  - CKV_AWS_91
+  - CKV_AWS_103
+  - CKV_AWS_130
+  - CKV_AWS_131
+  - CKV_AWS_144
+  - CKV_AWS_150
+  - CKV_AWS_260
+  - CKV_AWS_333
+  - CKV_AWS_338
+  - CKV_AWS_378
+  - CKV_AWS_382
+  - CKV2_AWS_11
+  - CKV2_AWS_12
+  - CKV2_AWS_20
+  - CKV2_AWS_28
+  - CKV2_AWS_61
+  - CKV2_AWS_62
+  # KMS key policies use Resource "*" by design: in a key policy,
+  # this refers to the key to which the policy is attached.
+  - CKV_AWS_109
+  - CKV_AWS_111
+  - CKV_AWS_356

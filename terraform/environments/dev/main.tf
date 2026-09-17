@@ -1,5 +1,51 @@
-data "aws_availability_zones" "available" {
-  state = "available"
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "logs_kms" {
+  statement {
+    sid    = "EnableAccountRootUserPermissions"
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      ]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowCloudWatchLogsToUseKey"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${var.aws_region}.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+      "kms:CreateGrant"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+
+      values = [
+        "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${local.name}"
+      ]
+    }
+  }
 }
 
 locals {
@@ -35,7 +81,7 @@ resource "aws_subnet" "public" {
 
   vpc_id                  = aws_vpc.main.id
   cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
-  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
 
   tags = merge(local.common_tags, {
@@ -116,19 +162,36 @@ resource "aws_security_group" "ecs" {
   })
 }
 
+
+resource "aws_kms_key" "logs" {
+  description             = "KMS key for ${local.name} CloudWatch logs"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.logs_kms.json
+
+  tags = local.common_tags
+}
+
+resource "aws_kms_alias" "logs" {
+  name          = "alias/${local.name}-logs"
+  target_key_id = aws_kms_key.logs.key_id
+}
+
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/${local.name}"
   retention_in_days = 7
+  kms_key_id        = aws_kms_key.logs.arn
 
   tags = local.common_tags
 }
 
 resource "aws_lb" "app" {
-  name               = substr("${local.name}-alb", 0, 32)
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = aws_subnet.public[*].id
+  name                       = substr("${local.name}-alb", 0, 32)
+  internal                   = false
+  load_balancer_type         = "application"
+  security_groups            = [aws_security_group.alb.id]
+  subnets                    = aws_subnet.public[*].id
+  enable_deletion_protection = false
 
   tags = merge(local.common_tags, {
     Name = "${local.name}-alb"
@@ -201,7 +264,7 @@ resource "aws_ecs_cluster" "app" {
 
   setting {
     name  = "containerInsights"
-    value = "disabled"
+    value = "enabled"
   }
 
   tags = local.common_tags
@@ -220,6 +283,8 @@ resource "aws_ecs_task_definition" "app" {
       name      = "app"
       image     = var.container_image
       essential = true
+
+      readonlyRootFilesystem = true
 
       portMappings = [
         {
