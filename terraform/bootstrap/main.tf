@@ -35,7 +35,8 @@ data "aws_iam_policy_document" "ecr_kms" {
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.state_bucket_name
+  bucket        = var.state_bucket_name
+  force_destroy = true
 
   tags = {
     Name        = "${var.project_name}-terraform-state"
