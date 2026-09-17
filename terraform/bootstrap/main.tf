@@ -226,6 +226,20 @@ resource "aws_iam_role" "github_actions" {
             ]
           }
         }
+      },
+      {
+        Sid    = "AllowPassEcsTaskExecutionRole"
+        Effect = "Allow"
+
+        Action = "iam:PassRole"
+
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-${var.environment}-ecs-task-execution"
+
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
       }
     ]
   })
