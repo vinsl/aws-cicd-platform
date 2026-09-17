@@ -196,6 +196,7 @@ resource "aws_iam_openid_connect_provider" "github" {
   }
 }
 
+
 resource "aws_iam_role" "github_actions" {
   name = "${var.project_name}-github-actions-${var.environment}"
 
@@ -228,6 +229,8 @@ resource "aws_iam_role" "github_actions" {
       }
     ]
   })
+
+
   tags = {
     Name        = "${var.project_name}-github-actions"
     Environment = var.environment
