@@ -1,5 +1,39 @@
 data "aws_caller_identity" "current" {}
 
+data "aws_iam_policy_document" "terraform_state_kms" {
+  statement {
+    sid    = "EnableAccountRootUserPermissions"
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      ]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "ecr_kms" {
+  statement {
+    sid    = "EnableAccountRootUserPermissions"
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      ]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+}
+
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
 
@@ -7,6 +41,44 @@ resource "aws_s3_bucket" "terraform_state" {
     Name        = "${var.project_name}-terraform-state"
     Environment = var.environment
     ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_kms_key" "terraform_state" {
+  description             = "KMS key for ${var.project_name} Terraform state"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.terraform_state_kms.json
+
+  tags = {
+    Name        = "${var.project_name}-state-kms"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_kms_alias" "terraform_state" {
+  name          = "alias/${var.project_name}-terraform-state"
+  target_key_id = aws_kms_key.terraform_state.key_id
+}
+
+
+resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    id     = "expire-old-noncurrent-versions"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 }
 
@@ -23,8 +95,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.terraform_state.arn
     }
+
+    bucket_key_enabled = true
   }
 }
 
@@ -69,6 +144,24 @@ resource "aws_s3_bucket_policy" "terraform_state" {
   })
 }
 
+resource "aws_kms_key" "ecr" {
+  description             = "KMS key for ${var.project_name} ECR repository"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.ecr_kms.json
+
+  tags = {
+    Name        = "${var.project_name}-ecr-kms"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_kms_alias" "ecr" {
+  name          = "alias/${var.project_name}-ecr"
+  target_key_id = aws_kms_key.ecr.key_id
+}
+
 resource "aws_ecr_repository" "app" {
   name                 = "${var.project_name}-app"
   image_tag_mutability = "IMMUTABLE"
@@ -78,7 +171,8 @@ resource "aws_ecr_repository" "app" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256"
+    encryption_type = "KMS"
+    kms_key         = aws_kms_key.ecr.arn
   }
 
   tags = {
